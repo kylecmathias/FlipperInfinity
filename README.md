@@ -1,4 +1,6 @@
 # Flipper Infinity - Embedded Multi-Protocol Analysis Device
+<img width="3024" height="4032" alt="20260522_135707" src="https://github.com/user-attachments/assets/d2a83646-06da-43d4-baa3-0bdc26a2cb9f" />
+
 *Ongoing — Hardware complete, PCB designed, firmware in active development*
 
 A handheld multi-protocol signal analysis device built on a custom ESP32 PCB, integrating NFC/RFID, sub-GHz RF, infrared, and WiFi into a single embedded platform with an on-device touchscreen interface.
@@ -31,6 +33,10 @@ Designed from scratch in KiCad. Two-layer board with:
 - Ground pour on both copper layers
 - PN532 antenna keepout zone to preserve NFC read range
 - CC1101 module positioned at board edge for unobstructed antenna radiation
+
+<img width="539" height="771" alt="image" src="https://github.com/user-attachments/assets/6acbae4a-2d81-46dd-b218-9958b169d4bd" />
+
+
 
 ### Pin Mapping
 

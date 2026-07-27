@@ -1,26 +1,3 @@
-SET(SOURCES ui_comp_logoimage.c
-    ui_comp.c
-    ui_LOGO.c
-    ui_MENU.c
-    ui_WIFI_MENU.c
-    ui_BLUETOOTH_MENU.c
-    ui_NFC_MENU.c
-    ui_RFID_MENU.c
-    ui_IR_MENU.c
-    ui_RF_MENU.c
-    ui_SCANNETWORKS.c
-    ui.c
-    ui_comp_hook.c
-    ui_helpers.c
-    ui_events.c
-    ui_img_logo_png.c
-    ui_img_wifi_png.c
-    ui_img_no_wifi_png.c
-    ui_img_bluetooth_png.c
-    ui_img_no_bluetooth_png.c
-    ui_img_nfc_png.c
-    ui_img_rfid_png.c
-    ui_img_ir_png.c
-    ui_img_rf_png.c)
-
-add_library(ui ${SOURCES})
+cmake_minimum_required(VERSION 3.16.0)
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(FlipperInfinity)

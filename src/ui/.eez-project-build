@@ -1,0 +1,26 @@
+{
+  "files": [
+    "actions.h",
+    "fonts.h",
+    "images.c",
+    "images.h",
+    "screens.c",
+    "screens.h",
+    "structs.h",
+    "styles.c",
+    "styles.h",
+    "ui.c",
+    "ui.h",
+    "ui_image_bluetooth.c",
+    "ui_image_ir.c",
+    "ui_image_logo.c",
+    "ui_image_nfc.c",
+    "ui_image_no_bluetooth.c",
+    "ui_image_no_wifi.c",
+    "ui_image_rf.c",
+    "ui_image_rfid.c",
+    "ui_image_settings.c",
+    "ui_image_wifi.c",
+    "vars.h"
+  ]
+}

@@ -101,12 +101,17 @@ Frequency analyzer, listen, decode, replay, transmit
 
 ```
 FlipperInfinity/
-├── src/                    # Firmware source (C++, ESP-IDF)
+├── include/                # Header files to include (.hpp)
+├── src/                    # Firmware source (.cpp, ESP-IDF) and build files (CMakeLists, idf_component)
+│   ├── ui/                 # UI files generated with EEZ Studio (.c, .h)
 ├── hardware/
 │   ├── schematic/          # KiCad schematic (.kicad_sch)
 │   ├── pcb/                # KiCad PCB layout (.kicad_pcb)
 │   └── gerbers/
 │       └── v1.0/           # Manufacturing files for JLCPCB
+├── partitions.csv          # ESP32s3 partitions
+├── sdkconfig.defaults      # Configuration overrides
+├── platformio.ini          # Platformio configuration
 └── README.md
 ```
 

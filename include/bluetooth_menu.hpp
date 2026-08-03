@@ -3,6 +3,9 @@
 #include "header.hpp"
 #include "ui_bridge.hpp"
 
+inline constexpr uint8_t BLE_AD_INTERVAL_MIN_MS = 20;
+inline constexpr uint8_t BLE_AD_INTERVAL_MAX_MS = 40;
+
 enum class BLEAddrType : uint8_t {
     PUBLIC = 0,
     RANDOM = 1,

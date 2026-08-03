@@ -62,6 +62,17 @@ static void event_handler_cb_bluetooth_menu_discovered_ble_devices(lv_event_t *e
     }
 }
 
+static void event_handler_cb_nfc_menu_nfc_option_dropdown(lv_event_t *e) {
+    lv_event_code_t event = lv_event_get_code(e);
+    if (event == LV_EVENT_VALUE_CHANGED) {
+        lv_obj_t *ta = lv_event_get_target(e);
+        if (tick_value_change_obj != ta) {
+            int32_t value = lv_dropdown_get_selected(ta);
+            set_var_nfc_option(value);
+        }
+    }
+}
+
 //
 // Screens
 //
@@ -107,7 +118,7 @@ void create_screen_home_menu() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_status_bar(obj, 9);
+            create_user_widget_status_bar(obj, 8);
         }
         {
             // WifiMenuButton
@@ -167,31 +178,12 @@ void create_screen_home_menu() {
             }
         }
         {
-            // RFIDMenuButton
-            lv_obj_t *obj = lv_btn_create(parent_obj);
-            objects.rfid_menu_button = obj;
-            lv_obj_set_pos(obj, 10, 102);
-            lv_obj_set_size(obj, 70, 70);
-            lv_obj_add_event_cb(obj, action_change_screen, LV_EVENT_CLICKED, (void *)6);
-            {
-                lv_obj_t *parent_obj = obj;
-                {
-                    lv_obj_t *obj = lv_img_create(parent_obj);
-                    lv_obj_set_pos(obj, -13, -8);
-                    lv_obj_set_size(obj, 70, 70);
-                    lv_img_set_src(obj, &img_rfid);
-                    lv_img_set_zoom(obj, 80);
-                    lv_img_set_size_mode(obj, LV_IMG_SIZE_MODE_REAL);
-                }
-            }
-        }
-        {
             // IRMenuButton
             lv_obj_t *obj = lv_btn_create(parent_obj);
             objects.ir_menu_button = obj;
-            lv_obj_set_pos(obj, 85, 102);
+            lv_obj_set_pos(obj, 10, 102);
             lv_obj_set_size(obj, 70, 70);
-            lv_obj_add_event_cb(obj, action_change_screen, LV_EVENT_CLICKED, (void *)7);
+            lv_obj_add_event_cb(obj, action_change_screen, LV_EVENT_CLICKED, (void *)6);
             {
                 lv_obj_t *parent_obj = obj;
                 {
@@ -208,9 +200,9 @@ void create_screen_home_menu() {
             // RFMenuButton
             lv_obj_t *obj = lv_btn_create(parent_obj);
             objects.rf_menu_button = obj;
-            lv_obj_set_pos(obj, 160, 102);
+            lv_obj_set_pos(obj, 85, 102);
             lv_obj_set_size(obj, 70, 70);
-            lv_obj_add_event_cb(obj, action_change_screen, LV_EVENT_CLICKED, (void *)8);
+            lv_obj_add_event_cb(obj, action_change_screen, LV_EVENT_CLICKED, (void *)7);
             {
                 lv_obj_t *parent_obj = obj;
                 {
@@ -229,7 +221,7 @@ void create_screen_home_menu() {
 }
 
 void tick_screen_home_menu() {
-    tick_user_widget_status_bar(9);
+    tick_user_widget_status_bar(8);
 }
 
 void create_screen_wifi_menu() {
@@ -251,7 +243,7 @@ void create_screen_wifi_menu() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_status_bar(obj, 21);
+            create_user_widget_status_bar(obj, 19);
         }
         {
             lv_obj_t *obj = lv_label_create(parent_obj);
@@ -348,7 +340,7 @@ void create_screen_wifi_menu() {
                     lv_textarea_set_placeholder_text(obj, "Password");
                     lv_textarea_set_one_line(obj, true);
                     lv_textarea_set_password_mode(obj, false);
-                    lv_obj_add_event_cb(obj, action_on_text_area_focused, LV_EVENT_CLICKED, (void *)1);
+                    lv_obj_add_event_cb(obj, action_on_text_area_focused, LV_EVENT_CLICKED, (void *)0);
                     lv_obj_add_event_cb(obj, action_hide_keyboard, LV_EVENT_DEFOCUSED, (void *)0);
                     lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
                 }
@@ -672,7 +664,7 @@ void create_screen_wifi_menu() {
 }
 
 void tick_screen_wifi_menu() {
-    tick_user_widget_status_bar(21);
+    tick_user_widget_status_bar(19);
     {
         if (!(lv_obj_get_state(objects.wifi_option_dropdown) & LV_STATE_EDITED)) {
             int32_t new_val = get_var_wifi_option();
@@ -738,7 +730,7 @@ void create_screen_bluetooth_menu() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_status_bar(obj, 62);
+            create_user_widget_status_bar(obj, 60);
         }
         {
             lv_obj_t *obj = lv_label_create(parent_obj);
@@ -938,8 +930,8 @@ void create_screen_bluetooth_menu() {
                     lv_textarea_set_one_line(obj, true);
                     lv_textarea_set_password_mode(obj, false);
                     lv_obj_add_event_cb(obj, action_enforce_btmac_format, LV_EVENT_VALUE_CHANGED, (void *)0);
-                    lv_obj_add_event_cb(obj, action_on_text_area_focused, LV_EVENT_CLICKED, (void *)0);
-                    lv_obj_add_event_cb(obj, action_hide_keyboard, LV_EVENT_DEFOCUSED, (void *)0);
+                    lv_obj_add_event_cb(obj, action_on_text_area_focused, LV_EVENT_CLICKED, (void *)1);
+                    lv_obj_add_event_cb(obj, action_hide_keyboard, LV_EVENT_DEFOCUSED, (void *)1);
                     lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
                 }
                 {
@@ -988,21 +980,6 @@ void create_screen_bluetooth_menu() {
             }
         }
         {
-            // BluetoothWifiBridgingContainer
-            lv_obj_t *obj = lv_obj_create(parent_obj);
-            objects.bluetooth_wifi_bridging_container = obj;
-            lv_obj_set_pos(obj, 0, 78);
-            lv_obj_set_size(obj, 240, 242);
-            lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_radius(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
-        }
-        {
             // BluetoothJammerContainer
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.bluetooth_jammer_container = obj;
@@ -1015,7 +992,6 @@ void create_screen_bluetooth_menu() {
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_radius(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
         }
         {
             // KeyboardBluetooth
@@ -1033,7 +1009,7 @@ void create_screen_bluetooth_menu() {
 }
 
 void tick_screen_bluetooth_menu() {
-    tick_user_widget_status_bar(62);
+    tick_user_widget_status_bar(60);
     {
         if (!(lv_obj_get_state(objects.bluetooth_option_dropdown) & LV_STATE_EDITED)) {
             int32_t new_val = get_var_bluetooth_option();
@@ -1099,7 +1075,7 @@ void create_screen_nfc_menu() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_status_bar(obj, 91);
+            create_user_widget_status_bar(obj, 88);
         }
         {
             lv_obj_t *obj = lv_label_create(parent_obj);
@@ -1117,59 +1093,131 @@ void create_screen_nfc_menu() {
             lv_obj_add_event_cb(obj, action_change_screen, LV_EVENT_CLICKED, (void *)2);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x545454), LV_PART_MAIN | LV_STATE_DEFAULT);
         }
-    }
-    
-    tick_screen_nfc_menu();
-}
-
-void tick_screen_nfc_menu() {
-    tick_user_widget_status_bar(91);
-}
-
-void create_screen_rfid_menu() {
-    lv_obj_t *obj = lv_obj_create(0);
-    objects.rfid_menu = obj;
-    lv_obj_set_pos(obj, 0, 0);
-    lv_obj_set_size(obj, 240, 320);
-    {
-        lv_obj_t *parent_obj = obj;
         {
-            // RFIDMenuStatusBar
+            // NFCOptionDropdown
+            lv_obj_t *obj = lv_dropdown_create(parent_obj);
+            objects.nfc_option_dropdown = obj;
+            lv_obj_set_pos(obj, 5, 42);
+            lv_obj_set_size(obj, 231, LV_SIZE_CONTENT);
+            lv_dropdown_set_options_static(obj, "Read Tag\nWrite Tag\nEmulate Tag\nSniffer\nMifare Attack\nDictionary Attack");
+            lv_obj_add_event_cb(obj, action_change_nfc_option, LV_EVENT_VALUE_CHANGED, (void *)0);
+            lv_obj_add_event_cb(obj, event_handler_cb_nfc_menu_nfc_option_dropdown, LV_EVENT_ALL, 0);
+        }
+        {
+            // NFCReadContainer
             lv_obj_t *obj = lv_obj_create(parent_obj);
-            objects.rfid_menu_status_bar = obj;
-            lv_obj_set_pos(obj, 0, 0);
-            lv_obj_set_size(obj, 240, 320);
+            objects.nfc_read_container = obj;
+            lv_obj_set_pos(obj, 0, 78);
+            lv_obj_set_size(obj, 240, 242);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_status_bar(obj, 98);
+            lv_obj_set_style_radius(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            {
+                lv_obj_t *parent_obj = obj;
+                {
+                    // ToggleReadingNFC
+                    lv_obj_t *obj = lv_btn_create(parent_obj);
+                    objects.toggle_reading_nfc = obj;
+                    lv_obj_set_pos(obj, 5, 6);
+                    lv_obj_set_size(obj, 230, 36);
+                    lv_obj_add_event_cb(obj, action_toggle_reading_nfc, LV_EVENT_CLICKED, (void *)0);
+                    lv_obj_set_style_bg_color(obj, lv_color_hex(0x747474), LV_PART_MAIN | LV_STATE_DEFAULT);
+                }
+                {
+                    // NFCReadFilenameTextarea
+                    lv_obj_t *obj = lv_textarea_create(parent_obj);
+                    objects.nfc_read_filename_textarea = obj;
+                    lv_obj_set_pos(obj, 5, 48);
+                    lv_obj_set_size(obj, 144, 36);
+                    lv_textarea_set_accepted_chars(obj, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-");
+                    lv_textarea_set_max_length(obj, 64);
+                    lv_textarea_set_placeholder_text(obj, "filename");
+                    lv_textarea_set_one_line(obj, true);
+                    lv_textarea_set_password_mode(obj, false);
+                    lv_obj_add_event_cb(obj, action_check_nfc_read_filename, LV_EVENT_VALUE_CHANGED, (void *)0);
+                    lv_obj_add_event_cb(obj, action_on_text_area_focused, LV_EVENT_CLICKED, (void *)2);
+                    lv_obj_add_event_cb(obj, action_hide_keyboard, LV_EVENT_DEFOCUSED, (void *)2);
+                    lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
+                }
+                {
+                    // NFCReadFileExtension
+                    lv_obj_t *obj = lv_textarea_create(parent_obj);
+                    objects.nfc_read_file_extension = obj;
+                    lv_obj_set_pos(obj, 152, 48);
+                    lv_obj_set_size(obj, 43, 36);
+                    lv_textarea_set_max_length(obj, 128);
+                    lv_textarea_set_placeholder_text(obj, ".bin");
+                    lv_textarea_set_one_line(obj, true);
+                    lv_textarea_set_password_mode(obj, false);
+                    lv_obj_clear_flag(obj, LV_OBJ_FLAG_CLICK_FOCUSABLE|LV_OBJ_FLAG_SCROLLABLE);
+                }
+                {
+                    // NFCReadSaveTag
+                    lv_obj_t *obj = lv_btn_create(parent_obj);
+                    objects.nfc_read_save_tag = obj;
+                    lv_obj_set_pos(obj, 199, 48);
+                    lv_obj_set_size(obj, 36, 36);
+                    lv_obj_add_event_cb(obj, action_nfc_read_save, LV_EVENT_CLICKED, (void *)0);
+                    lv_obj_set_style_bg_color(obj, lv_color_hex(0x2196f3), LV_PART_MAIN | LV_STATE_DEFAULT);
+                }
+                {
+                    // NFCReadResultsTextarea
+                    lv_obj_t *obj = lv_textarea_create(parent_obj);
+                    objects.nfc_read_results_textarea = obj;
+                    lv_obj_set_pos(obj, 5, 89);
+                    lv_obj_set_size(obj, 231, 149);
+                    lv_textarea_set_max_length(obj, 0);
+                    lv_textarea_set_one_line(obj, false);
+                    lv_textarea_set_password_mode(obj, false);
+                    lv_obj_clear_flag(obj, LV_OBJ_FLAG_CLICK_FOCUSABLE);
+                }
+            }
         }
         {
-            lv_obj_t *obj = lv_label_create(parent_obj);
-            lv_obj_set_pos(obj, 79, 21);
-            lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-            lv_obj_set_style_text_decor(obj, LV_TEXT_DECOR_UNDERLINE, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "RFID MENU");
-        }
-        {
-            // BackButtonMain_3
-            lv_obj_t *obj = lv_btn_create(parent_obj);
-            objects.back_button_main_3 = obj;
-            lv_obj_set_pos(obj, 4, 20);
-            lv_obj_set_size(obj, 31, 18);
-            lv_obj_add_event_cb(obj, action_change_screen, LV_EVENT_CLICKED, (void *)2);
-            lv_obj_set_style_bg_color(obj, lv_color_hex(0x545454), LV_PART_MAIN | LV_STATE_DEFAULT);
+            // KeyboardNFC
+            lv_obj_t *obj = lv_keyboard_create(parent_obj);
+            objects.keyboard_nfc = obj;
+            lv_obj_set_pos(obj, 0, 199);
+            lv_obj_set_size(obj, 240, 120);
+            lv_obj_add_event_cb(obj, action_hide_keyboard, LV_EVENT_READY, (void *)0);
+            lv_obj_add_event_cb(obj, action_hide_keyboard, LV_EVENT_CANCEL, (void *)0);
+            lv_obj_set_style_align(obj, LV_ALIGN_DEFAULT, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
     }
     
-    tick_screen_rfid_menu();
+    tick_screen_nfc_menu();
 }
 
-void tick_screen_rfid_menu() {
-    tick_user_widget_status_bar(98);
+void tick_screen_nfc_menu() {
+    tick_user_widget_status_bar(88);
+    {
+        if (!(lv_obj_get_state(objects.nfc_option_dropdown) & LV_STATE_EDITED)) {
+            int32_t new_val = get_var_nfc_option();
+            int32_t cur_val = lv_dropdown_get_selected(objects.nfc_option_dropdown);
+            if (new_val != cur_val) {
+                tick_value_change_obj = objects.nfc_option_dropdown;
+                lv_dropdown_set_selected(objects.nfc_option_dropdown, new_val);
+                tick_value_change_obj = NULL;
+            }
+        }
+    }
+    {
+        bool new_val = get_var_show_keyboard();
+        bool cur_val = lv_obj_has_flag(objects.keyboard_nfc, LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.keyboard_nfc;
+            if (new_val) {
+                lv_obj_add_flag(objects.keyboard_nfc, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_clear_flag(objects.keyboard_nfc, LV_OBJ_FLAG_HIDDEN);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
 }
 
 void create_screen_ir_menu() {
@@ -1191,7 +1239,7 @@ void create_screen_ir_menu() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_status_bar(obj, 105);
+            create_user_widget_status_bar(obj, 103);
         }
         {
             lv_obj_t *obj = lv_label_create(parent_obj);
@@ -1215,7 +1263,7 @@ void create_screen_ir_menu() {
 }
 
 void tick_screen_ir_menu() {
-    tick_user_widget_status_bar(105);
+    tick_user_widget_status_bar(103);
 }
 
 void create_screen_rf_menu() {
@@ -1237,7 +1285,7 @@ void create_screen_rf_menu() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_status_bar(obj, 112);
+            create_user_widget_status_bar(obj, 110);
         }
         {
             lv_obj_t *obj = lv_label_create(parent_obj);
@@ -1261,7 +1309,7 @@ void create_screen_rf_menu() {
 }
 
 void tick_screen_rf_menu() {
-    tick_user_widget_status_bar(112);
+    tick_user_widget_status_bar(110);
 }
 
 void create_user_widget_status_bar(lv_obj_t *parent_obj, int startWidgetIndex) {
@@ -1340,12 +1388,11 @@ tick_screen_func_t tick_screen_funcs[] = {
     tick_screen_wifi_menu,
     tick_screen_bluetooth_menu,
     tick_screen_nfc_menu,
-    tick_screen_rfid_menu,
     tick_screen_ir_menu,
     tick_screen_rf_menu,
 };
 void tick_screen(int screen_index) {
-    if (screen_index >= 0 && screen_index < 8) {
+    if (screen_index >= 0 && screen_index < 7) {
         tick_screen_funcs[screen_index]();
     }
 }
@@ -1447,7 +1494,6 @@ void create_screens() {
     create_screen_wifi_menu();
     create_screen_bluetooth_menu();
     create_screen_nfc_menu();
-    create_screen_rfid_menu();
     create_screen_ir_menu();
     create_screen_rf_menu();
 }

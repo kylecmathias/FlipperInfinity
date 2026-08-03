@@ -5,3 +5,4 @@ dependencies:
   espressif/mdns: "^1.11.3"
   atanisoft/esp_lcd_touch_xpt2046: "^1.0.5"
   joltwallet/littlefs: "^1.14.8"
+  jef-sure/pn532: "^0.0.3"

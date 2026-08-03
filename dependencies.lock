@@ -75,6 +75,16 @@ dependencies:
     source:
       type: idf
     version: 6.0.1
+  jef-sure/pn532:
+    component_hash: c3fe7a431d41a34d1e0d9cef1a25d1f67de2a9f0349143919396a1c74e285575
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.2.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 0.0.3
   joltwallet/littlefs:
     component_hash: fab83a8a57de01b05441557d78e9d10c755413a1836af4b2762b539add0c14b1
     dependencies:
@@ -97,8 +107,9 @@ direct_dependencies:
 - espressif/esp_lcd_ili9341
 - espressif/esp_lvgl_port
 - espressif/mdns
+- jef-sure/pn532
 - joltwallet/littlefs
 - lvgl/lvgl
-manifest_hash: 6303deeed4410ea29cb76151147ed1488a26472d646318c1f58c3d12fcd31134
+manifest_hash: d30950f99f12cb0806724a9af470ba28199e56b59e3e42d136de59e731b26c66
 target: esp32s3
 version: 2.0.0

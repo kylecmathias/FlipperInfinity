@@ -2,6 +2,8 @@
 #include "main_menu.hpp"
 #include "bluetooth_menu.hpp"
 #include "wifi_menu.hpp"
+#include "nfc_menu.hpp"
+#include "ir_menu.hpp"
 
 adc_oneshot_unit_handle_t adc1_handle = nullptr;
 
@@ -10,6 +12,19 @@ extern "C" {
     //bool __wrap_ieee80211_raw_frame_sanity_check(void *frame, int length) { return true; }
     void* lv_psram_malloc(size_t size) { return heap_caps_malloc(size, MALLOC_CAP_SPIRAM); }
     void* lv_psram_realloc(void* ptr, size_t size) { return heap_caps_realloc(ptr, size, MALLOC_CAP_SPIRAM); }
+}
+
+void init_fs() {
+    esp_vfs_littlefs_conf_t conf = {
+        .base_path = LITTLEFS_MOUNT,
+        .partition_label = LITTLEFS_PART_LABEL,
+        .format_if_mount_failed = true
+    };
+
+    esp_err_t ret = esp_vfs_littlefs_register(&conf);
+    if (ret != ESP_OK) {
+        printf("Failed to mount LittleFS (%s)", esp_err_to_name(ret));
+    }
 }
 
 void touch_calibration(esp_lcd_touch_handle_t tp, uint16_t *x, uint16_t *y, uint16_t *strength, uint8_t *point_num, uint8_t max_point_num) {
@@ -100,6 +115,8 @@ void init_tft() {
 
     //initialize lvgl
     lvgl_port_cfg_t lvgl_cfg = ESP_LVGL_PORT_INIT_CONFIG();
+    lvgl_cfg.task_affinity = 1;    
+    lvgl_cfg.task_priority = 4;
     lvgl_port_init(&lvgl_cfg);
 
     //pass the screen to lvgl
@@ -162,15 +179,79 @@ void init_bluetooth() {
     nimble_port_freertos_init(ble_host_task);
 }
 
+void init_nfc(pn532_t* &device) {    
+    pn532_bus_t* pn532_bus = pn532_spi_init(PN532_HOST, GPIO_PINS::SCK, GPIO_PINS::MISO, GPIO_PINS::MOSI, GPIO_PINS::PN532_SS, PN532_CLK);
+    device = pn532_init(pn532_bus, GPIO_PINS::PN532_IRQ, GPIO_PINS::PN532_RST);
+
+    if (device == nullptr) {
+        printf("ERROR: Failed to initialize pn532 on spi\n");
+    }
+}
+
+// void init_ir() {
+//     rmt_tx_channel_config_t tx_chan_cfg = {
+//         .gpio_num = GPIO_PINS::IR_TX,
+//         .clk_src = RMT_CLK_SRC_DEFAULT,
+//         .resolution_hz = IR_RES_HZ,
+//         .mem_block_symbols = 64,
+//         .trans_queue_depth = 4,
+//         .flags = {
+//             .invert_out = 0,
+//             .with_dma = 0
+//         }
+//     };
+//     ESP_ERROR_CHECK(rmt_new_tx_channel(&tx_chan_cfg, &ir_tx_channel));
+
+//     rmt_carrier_config_t carrier_cfg = {
+//         .frequency_hz = IR_TX_CARRIER_FREQ_HZ,
+//         .duty_cycle = IR_TX_CARRIER_DUTY,
+//         .flags = {
+//             .polarity_active_low = 0,
+//             .always_on = 0
+//         }
+//     };
+//     ESP_ERROR_CHECK(rmt_apply_carrier(ir_tx_channel, &carrier_cfg));
+//     ESP_ERROR_CHECK(rmt_enable(ir_tx_channel));
+
+//     rmt_rx_channel_config_t rx_chan_cfg = {
+//         .gpio_num = GPIO_PINS::IR_RX,
+//         .clk_src = RMT_CLK_SRC_DEFAULT,
+//         .resolution_hz = IR_RES_HZ,
+//         .mem_block_symbols = 64,
+//         .flags = {
+//             .with_dma = 0
+//         }
+//     };
+//     ESP_ERROR_CHECK(rmt_new_rx_channel(&rx_chan_cfg, &ir_rx_channel));
+
+//     rmt_receive_config_t receive_cfg = {
+//         .signal_range_min_ns = 10000,
+//         .signal_range_max_ns = 12000 * 1000,
+//         .flags = {
+//             .en_partial_rx = 0
+//         }
+//     };
+// }
+
 void init_pins() {
-    gpio_config_t io_conf = {
+    gpio_config_t batt_src_conf = {
         .pin_bit_mask = (1ULL << GPIO_PINS::BATT_SRC),
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_ENABLE,
         .intr_type = GPIO_INTR_DISABLE
     };
-    gpio_config(&io_conf);
+    gpio_config(&batt_src_conf);
+
+    gpio_config_t tft_bkl_conf = {
+        .pin_bit_mask = (1ULL << GPIO_PINS::TFT_BKL),
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE
+    };
+    gpio_config(&tft_bkl_conf);
+    gpio_set_level(GPIO_PINS::TFT_BKL, HIGH);
 
     adc_oneshot_unit_init_cfg_t init_config1 = {
         .unit_id = ADC_UNIT_1,
@@ -187,12 +268,18 @@ void init_pins() {
 }
 
 void app_main(void) {
+    vTaskDelay(pdMS_TO_TICKS(500));
     init_pins();
     init_wifi();
     init_bluetooth();
+
     init_psram_oui_database();
+
     vTaskDelay(pdMS_TO_TICKS(10));
     init_tft();
+
+    pn532_t* device = nullptr;
+    init_nfc(device);
 
     lvgl_port_lock(0);
     ui_init();
@@ -203,10 +290,9 @@ void app_main(void) {
 
     init_wifi_menu();
     init_bluetooth_menu();
+    init_nfc_menu(device);
 
     loadScreen(SCREEN_ID_LOGO);
 
-    while (1) {
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
+    vTaskDelete(NULL);
 }

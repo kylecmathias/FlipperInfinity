@@ -16,10 +16,9 @@ enum ScreensEnum {
     SCREEN_ID_WIFI_MENU = 3,
     SCREEN_ID_BLUETOOTH_MENU = 4,
     SCREEN_ID_NFC_MENU = 5,
-    SCREEN_ID_RFID_MENU = 6,
-    SCREEN_ID_IR_MENU = 7,
-    SCREEN_ID_RF_MENU = 8,
-    _SCREEN_ID_LAST = 8
+    SCREEN_ID_IR_MENU = 6,
+    SCREEN_ID_RF_MENU = 7,
+    _SCREEN_ID_LAST = 7
 };
 
 typedef struct _objects_t {
@@ -28,7 +27,6 @@ typedef struct _objects_t {
     lv_obj_t *wifi_menu;
     lv_obj_t *bluetooth_menu;
     lv_obj_t *nfc_menu;
-    lv_obj_t *rfid_menu;
     lv_obj_t *ir_menu;
     lv_obj_t *rf_menu;
     lv_obj_t *home_menu_status_bar;
@@ -40,7 +38,6 @@ typedef struct _objects_t {
     lv_obj_t *wifi_menu_button;
     lv_obj_t *bluetooth_menu_button;
     lv_obj_t *nfc_menu_button;
-    lv_obj_t *rfid_menu_button;
     lv_obj_t *ir_menu_button;
     lv_obj_t *rf_menu_button;
     lv_obj_t *wifi_menu_status_bar;
@@ -110,7 +107,6 @@ typedef struct _objects_t {
     lv_obj_t *bt_current_mac_label;
     lv_obj_t *randomize_bt_spoof_mac_button;
     lv_obj_t *pick_bluetooth_mac_to_spoof_roller;
-    lv_obj_t *bluetooth_wifi_bridging_container;
     lv_obj_t *bluetooth_jammer_container;
     lv_obj_t *keyboard_bluetooth;
     lv_obj_t *nfc_menu_status_bar;
@@ -120,13 +116,14 @@ typedef struct _objects_t {
     lv_obj_t *nfc_menu_status_bar__battery_bar;
     lv_obj_t *nfc_menu_status_bar__battery_percentage;
     lv_obj_t *back_button_main_2;
-    lv_obj_t *rfid_menu_status_bar;
-    lv_obj_t *rfid_menu_status_bar__status_bar_container;
-    lv_obj_t *rfid_menu_status_bar__wifi_status;
-    lv_obj_t *rfid_menu_status_bar__bluetooth_status;
-    lv_obj_t *rfid_menu_status_bar__battery_bar;
-    lv_obj_t *rfid_menu_status_bar__battery_percentage;
-    lv_obj_t *back_button_main_3;
+    lv_obj_t *nfc_option_dropdown;
+    lv_obj_t *nfc_read_container;
+    lv_obj_t *toggle_reading_nfc;
+    lv_obj_t *nfc_read_filename_textarea;
+    lv_obj_t *nfc_read_file_extension;
+    lv_obj_t *nfc_read_save_tag;
+    lv_obj_t *nfc_read_results_textarea;
+    lv_obj_t *keyboard_nfc;
     lv_obj_t *ir_menu_status_bar;
     lv_obj_t *ir_menu_status_bar__status_bar_container;
     lv_obj_t *ir_menu_status_bar__wifi_status;
@@ -159,9 +156,6 @@ void tick_screen_bluetooth_menu();
 
 void create_screen_nfc_menu();
 void tick_screen_nfc_menu();
-
-void create_screen_rfid_menu();
-void tick_screen_rfid_menu();
 
 void create_screen_ir_menu();
 void tick_screen_ir_menu();

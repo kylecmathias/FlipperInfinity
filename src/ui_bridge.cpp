@@ -2,6 +2,11 @@
 
 extern adc_oneshot_unit_handle_t adc1_handle;
 
+static bool last_wifi = false;
+static bool last_bluetooth = false;
+static bool last_on_battery = false;
+static uint8_t last_battery_lvl = 255;
+
 
 //helpers
 ScreensEnum screen_id(uint16_t screen) {
@@ -12,6 +17,18 @@ lv_obj_t* keyboard_id(uint8_t id) {
     switch (id) {
         case 0:
             keyboard = objects.keyboard_wifi;
+            break;
+        case 1:
+            keyboard = objects.keyboard_bluetooth;
+            break;
+        case 2:
+            keyboard = objects.keyboard_nfc;
+            break;
+        case 3:
+            //keyboard = objects.keyboard_ir;
+            break;
+        case 4:
+            //keyboard = objects.keyboard_rf;
             break;
         default:
             keyboard = objects.keyboard_wifi;
@@ -28,7 +45,6 @@ void status_bar_update(bool wifi_active, bool bluetooth_active, bool on_battery,
         objects.wifi_menu_status_bar__wifi_status,
         objects.bluetooth_menu_status_bar__wifi_status,
         objects.nfc_menu_status_bar__wifi_status,
-        objects.rfid_menu_status_bar__wifi_status,
         objects.ir_menu_status_bar__wifi_status,
         objects.rf_menu_status_bar__wifi_status,
     };
@@ -37,7 +53,6 @@ void status_bar_update(bool wifi_active, bool bluetooth_active, bool on_battery,
         objects.wifi_menu_status_bar__bluetooth_status,
         objects.bluetooth_menu_status_bar__bluetooth_status,
         objects.nfc_menu_status_bar__bluetooth_status,
-        objects.rfid_menu_status_bar__bluetooth_status,
         objects.ir_menu_status_bar__bluetooth_status,
         objects.rf_menu_status_bar__bluetooth_status,
     };
@@ -46,7 +61,6 @@ void status_bar_update(bool wifi_active, bool bluetooth_active, bool on_battery,
         objects.wifi_menu_status_bar__battery_percentage,
         objects.bluetooth_menu_status_bar__battery_percentage,
         objects.nfc_menu_status_bar__battery_percentage,
-        objects.rfid_menu_status_bar__battery_percentage,
         objects.ir_menu_status_bar__battery_percentage,
         objects.rf_menu_status_bar__battery_percentage,
     };
@@ -55,7 +69,6 @@ void status_bar_update(bool wifi_active, bool bluetooth_active, bool on_battery,
         objects.wifi_menu_status_bar__battery_bar,
         objects.bluetooth_menu_status_bar__battery_bar,
         objects.nfc_menu_status_bar__battery_bar,
-        objects.rfid_menu_status_bar__battery_bar,
         objects.ir_menu_status_bar__battery_bar,
         objects.rf_menu_status_bar__battery_bar,
     };
@@ -129,12 +142,20 @@ void status_timer_cb(lv_timer_t * timer) {
 
     battery_lvl = map(battery_adc, 0, (1UL << ADC_RES), 0, 100);
 
+    bool state_changed = false;
+    if (wifi != last_wifi) { last_wifi = wifi; state_changed = true; }
+    if (bluetooth != last_bluetooth) { last_bluetooth = bluetooth; state_changed = true; }
+    if (is_on_battery != last_on_battery) { last_on_battery = is_on_battery; state_changed = true; }
+    if (battery_lvl != last_battery_lvl) { last_battery_lvl = battery_lvl; state_changed = true; }
+
     set_var_wifi_active(wifi);
     set_var_bluetooth_active(bluetooth);
     set_var_on_battery(is_on_battery);
     set_var_battery_level(battery_lvl);
 
-    status_bar_update(wifi, bluetooth, is_on_battery, battery_lvl);
+    if (state_changed) {
+        status_bar_update(wifi, bluetooth, is_on_battery, battery_lvl);
+    }
 }
 
 
@@ -195,7 +216,7 @@ void set_initial_flags() {
     set_var_bluetooth_active(false);
     set_var_show_keyboard(false);
 
-    lv_timer_create(status_timer_cb, 1, nullptr);
+    lv_timer_create(status_timer_cb, 1000, nullptr);
 }
 void set_screen_initial_content(ScreensEnum screen) {
     status_bar_update(wifi_active, bluetooth_active, on_battery, battery_level);
@@ -208,6 +229,9 @@ void set_screen_initial_content(ScreensEnum screen) {
             break;
         case ScreensEnum::SCREEN_ID_BLUETOOTH_MENU:
             lv_obj_add_flag(objects.keyboard_bluetooth, LV_OBJ_FLAG_HIDDEN);
+            break;
+        case ScreensEnum::SCREEN_ID_NFC_MENU:
+            lv_obj_add_flag(objects.keyboard_nfc, LV_OBJ_FLAG_HIDDEN);
             break;
         default:
             break;

@@ -441,7 +441,7 @@ void inventory_ui_timer_cb(lv_timer_t * timer) {
     if (strncmp(roller_str.c_str(), last_roller_content, sizeof(last_roller_content)) == 0) {
         return;
     }
-    strncpy(last_roller_content, roller_str.c_str(), sizeof(last_roller_content) - 1);
+    strlcpy(last_roller_content, roller_str.c_str(), sizeof(last_roller_content));
     last_roller_content[sizeof(last_roller_content) - 1] = '\0';
 
     lv_roller_set_options(objects.inventoried_devices_roller, roller_str.c_str(), LV_ROLLER_MODE_NORMAL);
@@ -509,16 +509,6 @@ void fill_mac_spoofer_roller(bool use_inventory) {
     else if (vendor_roller_str != nullptr) {
         lv_roller_set_options(objects.pick_mac_to_spoof_roller, vendor_roller_str, LV_ROLLER_MODE_NORMAL);
     }
-}
-void init_wifi_menu() {
-    lv_obj_add_flag(objects.keyboard_wifi, LV_OBJ_FLAG_HIDDEN);
-    fill_mac_spoofer_roller(false);
-
-    uint8_t mac[6];
-    char mac_str[MAC_STR_LEN];
-    esp_wifi_get_mac(WIFI_IF_STA, mac);
-    snprintf(mac_str, MAC_STR_LEN, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    lv_label_set_text(objects.current_mac_label, mac_str);
 }
 void mac_rotation_timer_cb(lv_timer_t* timer) {
     uint8_t mac[6];
@@ -699,6 +689,16 @@ void deauthenticator_timer_cb(lv_timer_t * timer) {
             }
         }
     }
+}
+void init_wifi_menu() {
+    lv_obj_add_flag(objects.keyboard_wifi, LV_OBJ_FLAG_HIDDEN);
+    fill_mac_spoofer_roller(false);
+
+    uint8_t mac[6];
+    char mac_str[MAC_STR_LEN];
+    esp_wifi_get_mac(WIFI_IF_STA, mac);
+    snprintf(mac_str, MAC_STR_LEN, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    lv_label_set_text(objects.current_mac_label, mac_str);
 }
 
 

@@ -6,11 +6,14 @@
 #include <string>
 #include <atomic>
 #include <optional>
+#include <array>
+#include <format>
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/event_groups.h>
 #include <freertos/semphr.h>
+#include <freertos/queue.h>
 
 #include <driver/spi_master.h>
 #include <driver/gpio.h>
@@ -18,6 +21,7 @@
 #include <esp_heap_caps.h>
 #include <esp_random.h>
 #include <esp_timer.h>
+#include <esp_private/periph_ctrl.h>
 
 #include <esp_adc/adc_oneshot.h>
 #include <esp_adc/adc_cali.h>
@@ -55,7 +59,23 @@
 #include <host/util/util.h>
 #include <services/gap/ble_svc_gap.h>
 
+extern "C" {
+    #include <jef-sure__pn532/include/pn532.h>
+}
+#include <rom/ets_sys.h>
+
+#include <driver/rmt_tx.h>
+#include <driver/rmt_rx.h>
+
 #include "helpers.hpp"
+
+inline constexpr const char* LITTLEFS_MOUNT = "/flipperinf";
+inline constexpr const char* LITTLEFS_PART_LABEL = "storage";
+inline constexpr size_t FILENAME_LEN = 64;
+inline constexpr size_t FILEPATH_LEN = 128;
+
+inline constexpr uint8_t HIGH = 1;
+inline constexpr uint8_t LOW = 0;
 
 inline constexpr const char* DISPLAY_HOSTNAME = "iPhone";
 inline constexpr size_t HOSTNAME_LEN = 32;
@@ -88,8 +108,8 @@ inline constexpr int8_t RSSI_MIN = -100;
 inline constexpr int8_t RSSI_MAX = -20;
 inline constexpr size_t MAX_UUIDS16 = 4;
 
-inline constexpr uint8_t BLE_AD_INTERVAL_MIN_MS = 20;
-inline constexpr uint8_t BLE_AD_INTERVAL_MAX_MS = 40;
+inline constexpr spi_host_device_t PN532_HOST = SPI2_HOST;
+inline constexpr uint32_t PN532_CLK = 2500000;
 
 namespace GPIO_PINS {
     static constexpr gpio_num_t NONE = GPIO_NUM_NC;

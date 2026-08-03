@@ -22,7 +22,8 @@ enum FlowGlobalVariables {
     FLOW_GLOBAL_VARIABLE_NETWORK_FOUND_SSID = 6,
     FLOW_GLOBAL_VARIABLE_DEVICE_INVENTORY_SIGNAL_STRENGTH = 7,
     FLOW_GLOBAL_VARIABLE_ON_BATTERY = 8,
-    FLOW_GLOBAL_VARIABLE_BLUETOOTH_OPTION = 9
+    FLOW_GLOBAL_VARIABLE_BLUETOOTH_OPTION = 9,
+    FLOW_GLOBAL_VARIABLE_NFC_OPTION = 10
 };
 
 // Native global variables
@@ -47,6 +48,8 @@ extern bool get_var_on_battery();
 extern void set_var_on_battery(bool value);
 extern int32_t get_var_bluetooth_option();
 extern void set_var_bluetooth_option(int32_t value);
+extern int32_t get_var_nfc_option();
+extern void set_var_nfc_option(int32_t value);
 
 #ifdef __cplusplus
 }

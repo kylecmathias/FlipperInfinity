@@ -37,6 +37,10 @@ extern void action_enforce_btmac_format(lv_event_t * e);
 extern void action_toggle_bluetooth_mac_spoofing(lv_event_t * e);
 extern void action_randomize_bluetooth_mac(lv_event_t * e);
 extern void action_select_bt_preset_mac(lv_event_t * e);
+extern void action_toggle_reading_nfc(lv_event_t * e);
+extern void action_nfc_read_save(lv_event_t * e);
+extern void action_change_nfc_option(lv_event_t * e);
+extern void action_check_nfc_read_filename(lv_event_t * e);
 
 #ifdef __cplusplus
 }

@@ -5,6 +5,9 @@ set(srcs
     "main_menu.cpp"
     "bluetooth_menu.cpp"
     "wifi_menu.cpp"
+    "nfc_menu.cpp"
+    "rf_menu.cpp"
+    "ir_menu.cpp"
 )
 
 file(GLOB ui_srcs "ui/*.c" "ui/*.cpp")
@@ -24,6 +27,7 @@ idf_component_register(
         esp_event
         mdns
         bt
+        pn532
 )
 
 #target_link_libraries(${COMPONENT_LIB} "-Wl,--wrap=ieee80211_raw_frame_sanity_check")

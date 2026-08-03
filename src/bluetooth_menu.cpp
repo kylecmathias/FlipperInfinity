@@ -107,6 +107,7 @@ static const char* preset_default_macs[] = {
 static const size_t ble_preset_count = sizeof(ble_presets) / sizeof(ble_presets[0]);
 static_assert(ble_preset_count == (sizeof(preset_default_macs) / sizeof(preset_default_macs[0])));
 
+
 //helpers
 void ble_host_task(void *param) {
     nimble_port_run();
@@ -492,7 +493,6 @@ void action_change_bluetooth_option(lv_event_t * e) {
     lv_obj_t* bluetooth_options[] = {
         objects.bluetooth_scanner_container,
         objects.bluetooth_spoofer_container,
-        objects.bluetooth_wifi_bridging_container,
         objects.bluetooth_jammer_container
     };
     size_t num_bluetooth_options = sizeof(bluetooth_options) / sizeof(lv_obj_t*);

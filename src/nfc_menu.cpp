@@ -3,10 +3,11 @@
 
 //statics
 static std::atomic<bool> read_scanning = false;
-static pn532_t* pn532 = nullptr;
+// static pn532_t* pn532 = nullptr;
+static std::optional<PN532> pn532;
 static lv_timer_t* read_timer = nullptr;
 static QueueHandle_t nfc_save_queue = nullptr;
-static pn532_uid_t current_scanned_uid;
+static PN532UID current_scanned_uid;
 static std::atomic<uint16_t> current_blocks = 0;
 static std::atomic<uint16_t> current_block_size = 0;
 static std::atomic<bool> current_is_mifare = false;
@@ -15,36 +16,11 @@ static size_t last_read_total_size = 0;
 static std::string cached_preview_text = "";
 static std::atomic<bool> nfc_busy = false;
 static std::atomic<bool> tag_ready_to_save = false;
-static std::atomic<uint32_t> last_progress_ms = 0;
 
 
 
 //helpers
-void nfc_watchdog_task(void* pvParameters) {
-    uint32_t stall_ms = 0;
-    while (true) {
-        vTaskDelay(pdMS_TO_TICKS(250));
-        if (nfc_busy.load(std::memory_order_acquire)) {
-            uint32_t now = xTaskGetTickCount() * portTICK_PERIOD_MS;
-            uint32_t last = last_progress_ms.load(std::memory_order_acquire);
-            if (now - last > 1750) {
-                stall_ms = now - last;
-                printf("CRITICAL: SPI stall (%lu ms), attempting to reset pn532\n", stall_ms);
-                pn532_reset(pn532);
-                vTaskDelay(pdMS_TO_TICKS(500));
-
-                if (!nfc_busy.load(std::memory_order_acquire)) continue; 
-
-                printf("FATAL: SPI bus deadlock, restarting.\n");
-                vTaskDelay(pdMS_TO_TICKS(200)); 
-                esp_restart();
-            }
-        }
-    }
-}
 void nfc_read_task(void* pvParameters) {
-    TaskHandle_t wdt_task = nullptr;
-    xTaskCreate(nfc_watchdog_task, "nfc_wdt_task", 4096, nullptr, 5, &wdt_task);
     bool is_mifare = current_is_mifare.load(std::memory_order_acquire);
     uint16_t blocks = current_blocks.load(std::memory_order_acquire);
     uint16_t block_size = current_block_size.load(std::memory_order_acquire);
@@ -87,16 +63,35 @@ void nfc_read_task(void* pvParameters) {
 
             uint8_t read_buffer[NFC_CHUNK_LEN] = {0};
             size_t read_len = (block_size == 4) ? 4 : 1;
+
             bool read_ok = false;
-            if (is_mifare) {
-                if (!pn532_14443_authenticate(pn532, DEFAULT_KEY, KEY_A, &current_scanned_uid, i)) {
+            int16_t auth_status = 1;
+            uint8_t retries = 5;
+            while (retries > 0) {
+                auth_status = 1;
+                
+                if (is_mifare) {
+                    auth_status = pn532->authenticate(PN532Key::KEY_A, DEFAULT_KEY, &current_scanned_uid, i);
+                }
+                
+                if (auth_status == 1) {
+                    read_ok = pn532->block_read(i, read_buffer, NFC_CHUNK_LEN);
+                    if (read_ok) {
+                        break; 
+                    }
+                }
+                else if (auth_status == 0) {
                     printf("DEBUG: Auth rejected at block %zu. Tag is protected.\n", i);
                     is_protected = true;
                     success = false;
-                    break;
+                    break; 
                 }
+                
+                retries--;
+                printf("WARN: Read/Auth failed at block %zu, retries left: %d\n", i, retries);
+                
+                vTaskDelay(pdMS_TO_TICKS(10)); 
             }
-            read_ok = pn532_14443_block_read(pn532, i, read_buffer, NFC_CHUNK_LEN);
             
             if (!read_ok) { 
                 printf("DEBUG: read failed at block %zu, t=%lu ms\n", i, time_ms());
@@ -109,7 +104,6 @@ void nfc_read_task(void* pvParameters) {
                 break; 
             }
             printf("Successful read at block: %zu, t=%lu ms\n", i, time_ms());
-            last_progress_ms.store(xTaskGetTickCount() * portTICK_PERIOD_MS, std::memory_order_release);
 
             size_t copy_bytes = read_len * block_size;
             size_t remaining_bytes = total_size - (i * block_size);
@@ -156,7 +150,7 @@ void nfc_read_task(void* pvParameters) {
     if (success) {
         lv_event_send(objects.nfc_read_filename_textarea, LV_EVENT_VALUE_CHANGED, nullptr);
     }
-    vTaskDelete(wdt_task);
+    // vTaskDelete(wdt_task);
     vTaskDelete(NULL);
 }
 void file_write_task(void *pvParameters) {
@@ -178,9 +172,6 @@ void file_write_task(void *pvParameters) {
 
             lvgl_port_lock(0);
             lv_obj_set_style_bg_color(objects.nfc_read_save_tag, success ? lv_palette_main(LV_PALETTE_GREEN) : lv_palette_main(LV_PALETTE_RED), LV_PART_MAIN);
-            lv_timer_set_repeat_count(lv_timer_create([](lv_timer_t*) {
-                lv_obj_set_style_bg_color(objects.nfc_read_save_tag, lv_color_hex(0x2196F3), LV_PART_MAIN);
-            }, 3000, nullptr), 1);
             lv_obj_clear_state(objects.toggle_reading_nfc, LV_STATE_DISABLED);
             lvgl_port_unlock();
 
@@ -189,7 +180,7 @@ void file_write_task(void *pvParameters) {
     }
 }
 void nfc_read_timer_cb(lv_timer_t * timer) {
-    if (pn532 == nullptr) {
+    if (!pn532.has_value()) {
         printf("CRITICAL: PN532 pointer is NULL\n");
         read_scanning.store(false, std::memory_order_release);
         lv_timer_del(read_timer);
@@ -200,10 +191,11 @@ void nfc_read_timer_cb(lv_timer_t * timer) {
         return;
     }
 
-    pn532_uids_array_t* uids = pn532_14443_get_all_uids(pn532);
-    if (uids == nullptr || uids->uids_count == 0) {
-        return; 
-    }
+    PN532UID uids[2];
+    size_t num_read;
+    bool success = pn532->read_targets(uids, sizeof(uids) / sizeof(PN532UID), &num_read);
+
+    if (!success || num_read == 0) return;
 
     read_scanning.store(false, std::memory_order_release);
     lv_timer_del(read_timer);
@@ -211,10 +203,9 @@ void nfc_read_timer_cb(lv_timer_t * timer) {
 
     lv_obj_set_style_bg_color(objects.toggle_reading_nfc, lv_color_hex(0x747474), LV_PART_MAIN);
 
-    current_scanned_uid = uids->uids[0]; 
+    current_scanned_uid = uids[0]; 
     uint16_t blocks, block_size;
-    pn532_14443_detect_card_type_and_capacity(&current_scanned_uid, &blocks, &block_size); 
-    free(uids);
+    pn532->detect_attributes(&current_scanned_uid, &blocks, &block_size);
 
     if (block_size == 4 && blocks == 16) {
         blocks = 135; 
@@ -226,14 +217,16 @@ void nfc_read_timer_cb(lv_timer_t * timer) {
     else if (sak_is_iso14443_4(current_scanned_uid.sak)) {
         uint8_t version_cmd[] = {0x90, 0x60, 0x00, 0x00, 0x00};
         uint8_t response_buffer[64];
-        size_t response_size;
-        if (pn532_14443_4_transceive(pn532, version_cmd, sizeof(version_cmd), response_buffer, &response_size)) {
-            int8_t family = mifare_family(response_buffer[1]);
+        int16_t response_size = 0;
+        uint8_t version = 0x00;
+        if (pn532->transceive(version_cmd, sizeof(version_cmd), response_buffer, &response_size)){
+            if (response_size > 4) version = response_buffer[4];
+            int8_t family = mifare_family(version);
             if (family == 1) { 
                 is_mifare = true;
             }
             else if (family == -1) {
-                if (pn532_14443_authenticate(pn532, DEFAULT_KEY, KEY_A, &current_scanned_uid, 0)) {
+                if (pn532->authenticate(PN532Key::KEY_A, DEFAULT_KEY, &current_scanned_uid, 0)) {
                     is_mifare = true;
                 }
             }
@@ -249,11 +242,30 @@ void nfc_read_timer_cb(lv_timer_t * timer) {
     lv_obj_add_state(objects.nfc_read_save_tag, LV_STATE_DISABLED); 
     xTaskCreatePinnedToCore(nfc_read_task, "nfc_read", 4096, nullptr, 4, nullptr, 0); 
 }
-void init_nfc_menu(pn532_t* dev) {
-    pn532 = dev != nullptr ? dev : nullptr;
+void init_nfc() {
+    PN532Config cfg = {};
 
-    if (pn532 != nullptr) {
-        pn532_set_passive_activation_retries(pn532, PN532_RETRIES);
+    PN532SPIConfig spi_cfg = {};
+    spi_cfg.host = PN532_HOST;
+    spi_cfg.mosi = GPIO_PINS::MOSI;
+    spi_cfg.miso = GPIO_PINS::MISO;
+    spi_cfg.sck  = GPIO_PINS::SCK;
+    spi_cfg.cs   = GPIO_PINS::PN532_SS;
+
+    cfg.interface = spi_cfg;
+    cfg.rst = GPIO_PINS::PN532_RST;
+    cfg.irq = GPIO_PINS::PN532_IRQ;
+
+    pn532.emplace(cfg);
+
+    pn532->hard_reset();
+    pn532->sam_config();
+    pn532->set_passive_activation_retries(0x01);
+}
+void init_nfc_menu() {
+    if (!pn532.has_value()){
+        printf("CRITICAL: PN532 not initialized");
+        return;
     }
 
     if (tag_psram_buffer == nullptr) {
@@ -311,6 +323,9 @@ void action_toggle_reading_nfc(lv_event_t * e) {
         lv_obj_set_style_bg_color(objects.toggle_reading_nfc, lv_color_hex(0x747474), LV_PART_MAIN);
         lvgl_port_unlock();
     }
+    lvgl_port_lock(0);
+    lv_obj_set_style_bg_color(objects.nfc_read_save_tag, lv_color_hex(0x2196F3), LV_PART_MAIN);
+    lvgl_port_unlock();
 }
 void action_nfc_read_save(lv_event_t * e) {
     const char* filename = lv_textarea_get_text(objects.nfc_read_filename_textarea);

@@ -1,6 +1,5 @@
 .pio
 .vscode/
-lib/
 managed_components/
 sdkconfig.arduino_nano_esp32
 sdkconfig.arduino_nano_esp32.old

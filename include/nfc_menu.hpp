@@ -36,7 +36,7 @@ namespace TagPreviewStrings {
 };
 
 struct nfc_save_chunk {
-    pn532_uid_t uid;
+    PN532UID uid;
     uint16_t blocks;
     uint16_t block_size;
     char filename[FILENAME_LEN];
@@ -71,4 +71,6 @@ inline std::string_view get_tag_type(uint8_t sak, uint16_t blocks) {
     }
 }
 
-void init_nfc_menu(pn532_t* dev);
+// void init_nfc_menu(pn532_t* dev);
+void init_nfc_menu();
+void init_nfc();

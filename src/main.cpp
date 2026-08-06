@@ -179,15 +179,6 @@ void init_bluetooth() {
     nimble_port_freertos_init(ble_host_task);
 }
 
-void init_nfc(pn532_t* &device) {    
-    pn532_bus_t* pn532_bus = pn532_spi_init(PN532_HOST, GPIO_PINS::SCK, GPIO_PINS::MISO, GPIO_PINS::MOSI, GPIO_PINS::PN532_SS, PN532_CLK);
-    device = pn532_init(pn532_bus, GPIO_PINS::PN532_IRQ, GPIO_PINS::PN532_RST);
-
-    if (device == nullptr) {
-        printf("ERROR: Failed to initialize pn532 on spi\n");
-    }
-}
-
 // void init_ir() {
 //     rmt_tx_channel_config_t tx_chan_cfg = {
 //         .gpio_num = GPIO_PINS::IR_TX,
@@ -234,6 +225,11 @@ void init_nfc(pn532_t* &device) {
 // }
 
 void init_pins() {
+    esp_err_t isr_err = gpio_install_isr_service(0);
+    if (isr_err != ESP_OK && isr_err != ESP_ERR_INVALID_STATE) {
+        printf("Failed to install GPIO ISR service: %s\n", esp_err_to_name(isr_err));
+    }
+
     gpio_config_t batt_src_conf = {
         .pin_bit_mask = (1ULL << GPIO_PINS::BATT_SRC),
         .mode = GPIO_MODE_INPUT,
@@ -270,6 +266,7 @@ void init_pins() {
 void app_main(void) {
     vTaskDelay(pdMS_TO_TICKS(500));
     init_pins();
+    init_fs();
     init_wifi();
     init_bluetooth();
 
@@ -278,8 +275,9 @@ void app_main(void) {
     vTaskDelay(pdMS_TO_TICKS(10));
     init_tft();
 
-    pn532_t* device = nullptr;
-    init_nfc(device);
+    // pn532_t* device = nullptr;
+    // init_nfc(device);
+    init_nfc();
 
     lvgl_port_lock(0);
     ui_init();
@@ -290,7 +288,7 @@ void app_main(void) {
 
     init_wifi_menu();
     init_bluetooth_menu();
-    init_nfc_menu(device);
+    init_nfc_menu();
 
     loadScreen(SCREEN_ID_LOGO);
 

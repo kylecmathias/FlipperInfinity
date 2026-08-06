@@ -58,10 +58,8 @@
 #include <host/ble_hs_adv.h>
 #include <host/util/util.h>
 #include <services/gap/ble_svc_gap.h>
+#include <pn532_driver.hpp>
 
-extern "C" {
-    #include <jef-sure__pn532/include/pn532.h>
-}
 #include <rom/ets_sys.h>
 
 #include <driver/rmt_tx.h>
